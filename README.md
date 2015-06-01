@@ -17,19 +17,25 @@ Build
 2. build qemu
 
 3. build syscall interception module
+
    cd sse & make
 
 RUN
 ===
 1. load the new kvm-kmod
+
    cd kvm-kmod & ./load.sh
 
 2. start the VM
+
    a. ./qemu-i386-system guest.img --enable-kvm -monitor stdio
+
    b. in qemu terminal run start-sse
 
 3. run the introspection program
+
    cd run
+
    ./run.sh ps
 
 
