@@ -4995,18 +4995,6 @@ static int handle_exception(struct kvm_vcpu *vcpu)
             int ret ;
 
             rip = kvm_rip_read(vcpu);
-  //          printk("catch BP at %lx %lx\n", rip, vcpu->arch.cr3);
-        
-             //emulat pop %ebp
-#if 0
-            esp = kvm_register_read(vcpu, VCPU_REGS_RSP);
-            read_guest_virt(vcpu, esp, &ebp, 4);
-            kvm_register_write(vcpu, VCPU_REGS_RBP, ebp);
-            kvm_register_write(vcpu, VCPU_REGS_RSP, esp + 4);
-
-            kvm_rip_write(vcpu, rip+1);
-
-#endif
             bsave = 0;
             inject_sys = 0;
             ret = 1;
@@ -5015,10 +5003,8 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 		    kvm_run->ex.exception = ex_no;
 
             if(
-       //        vcpu->kvm->sse_data.sse_enable == 1 
 			    vcpu->kvm->sse_data.cr3 == vcpu->arch.cr3
                )
-	//		   && vcpu->kvm->sse_data.esp == (esp & 0xffffe000))
 			   {
 
                     if(vcpu->kvm->sse_data.running == 1)
@@ -5027,12 +5013,10 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 					     ret = 0;
                          vcpu->kvm->sse_data.running = 0;
                          vcpu->kvm->sse_data.brestore = 1;
-                   //      printk("inject return %lx\n", kvm_register_read(vcpu, VCPU_REGS_RAX));
                      }
                         
                      if(vcpu->kvm->sse_data.start == 1)
                      {
-                     //       printk("inject sys is %lx %lx\n", rip+1, kvm_register_read(vcpu, VCPU_REGS_RAX));
                 	        kvm_run->ex.error_code =101;
 					        ret = 0;
                             inject_sys = 1;
@@ -5106,7 +5090,6 @@ static int handle_exception(struct kvm_vcpu *vcpu)
                      rip = kvm_rip_read(vcpu);
                      patch(vcpu, rip);
                      stop_search(vcpu);
-					 printk("set up process\n");
                      
                      return 1;
                  }
@@ -5124,11 +5107,7 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 					{
                     	if(eax == 1)  //find init process
                     	{
-                	    	//kvm_run->ex.error_code =100;
-					    	//vcpu->kvm->sse_data.sse_enable=1;
                         	ret = 1;
-                       		// 	brestore = 1;
-							printk("find init process\n");
 							inject_fork = 1;
 							vcpu->kvm->sse_data.initfind = 1;
 					    	vcpu->kvm->sse_data.cr3 = vcpu->arch.cr3;
@@ -5166,42 +5145,14 @@ static int handle_exception(struct kvm_vcpu *vcpu)
              }
 			  else if(vcpu->kvm->sse_data.search ==0)
               {
-#if 0
-                    if(vcpu->kvm->sse_data.sse_enable == 1 
-				   && vcpu->kvm->sse_data.cr3 == vcpu->arch.cr3
-                   )
-	//			   && vcpu->kvm->sse_data.esp == (esp & 0xffffe000))
-			        {
 
-                        if(vcpu->kvm->sse_data.running == 1)
-                        {
-                	        kvm_run->ex.error_code =102;
-					        ret = 0;
-                            vcpu->kvm->sse_data.running = 0;
-                            vcpu->kvm->sse_data.brestore = 1;
-                        }
-                        
-                        if(vcpu->kvm->sse_data.start == 1)
-                        {
-                	        kvm_run->ex.error_code =101;
-					        ret = 0;
-                            inject_sys = 1;
-                            vcpu->kvm->sse_data.running = 1;
-                            vcpu->kvm->sse_data.start = 0;
-                            bsave = 1;
-                        }
-
-				    }
-#endif
 				    if(vcpu->kvm->sse_data.sse_enable ==0
-                        //    && vcpu->arch.cr3 == 0xf8c8000
                             ){
 					    vcpu->kvm->sse_data.cr3 = vcpu->arch.cr3;
 					    vcpu->kvm->sse_data.esp = esp & 0xffffe000;
                         vcpu->kvm->sse_data.search = 1;
                         bsave = 1;
                         inject_sys = 1;
-                        printk("inject %lx %lx\n", vcpu->arch.cr3, esp &0xffffe000);
                         ret = 1;
 				    }
                 }
@@ -5232,9 +5183,8 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 
 				if (inject_fork)
 				{	
-                   kvm_queue_interrupt(vcpu, 0x80, 1);
+                                   kvm_queue_interrupt(vcpu, 0x80, 1);
 				   vcpu->kvm->sse_data.search = 1;
-				   printk("inject fork\n");
                    if(vcpu->kvm->sse_data.search ==1)
                    {
                         kvm_register_write(vcpu, VCPU_REGS_RAX, 2);  //inject a getpid
@@ -5247,7 +5197,6 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 				     rip = kvm_rip_read(vcpu);
 				     kvm_rip_write(vcpu, rip);
                      
-                     printk(" restore to %lx %lx %lx %lx\n", rip, kvm_register_read(vcpu, VCPU_REGS_RSP), kvm_register_read(vcpu, VCPU_REGS_RAX),kvm_register_read(vcpu, VCPU_REGS_RBX));
                 }
 
 				return ret;
