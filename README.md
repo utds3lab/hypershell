@@ -17,8 +17,7 @@ Build
 2. build qemu
 
 3. build syscall interception module
-
-   cd sse & make
+   $cd sse & make
 
 RUN
 ===
