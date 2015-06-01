@@ -1,0 +1,3 @@
+kernel//home/yufei/ATC14/kvm-kmod/x86/kvm.ko
+kernel//home/yufei/ATC14/kvm-kmod/x86/kvm-intel.ko
+kernel//home/yufei/ATC14/kvm-kmod/x86/kvm-amd.ko

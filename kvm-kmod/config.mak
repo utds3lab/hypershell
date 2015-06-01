@@ -1,0 +1,11 @@
+export ARCH=i386
+PREFIX=
+KERNELDIR=/lib/modules/3.0.0-31-generic-pae/build
+KERNELSOURCEDIR=
+KERNELVERSION=3.0.0-31-generic-pae
+export CROSS_COMPILE=
+export CC=gcc
+export LD=ld
+export OBJCOPY=objcopy
+export AR=ar
+KVM_VERSION=kvm-devel
