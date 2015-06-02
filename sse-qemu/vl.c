@@ -2896,10 +2896,6 @@ static int object_create(QemuOpts *opts, void *opaque)
 
 int main(int argc, char **argv, char **envp)
 {
-	extern FILE * PEMU_stderr;
-	extern FILE * PEMU_stdout;
-	PEMU_stderr =stderr;
-	PEMU_stdout = stdout;
     int i;
     int snapshot, linux_boot;
     const char *icount_option = NULL;
