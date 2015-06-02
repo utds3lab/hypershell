@@ -22,7 +22,7 @@ Build
     $ cd sse-qemu  
     $ mkdir build  
     $ cd build  
-    $ ../configure --prefix=`pwd` --target-list=i386-softmmu --disable-werror --disable-strip  --enable-kvm  
+    $ ../configure --prefix=``pwd`` --target-list=i386-softmmu --disable-werror --disable-strip  --enable-kvm  
     $ make install  
 
 3. build syscall interception module
