@@ -4984,7 +4984,8 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 		 * user space while in guest debugging mode. Reading it for
 		 * #DB as well causes no harm, it is not used in that case.
 		 */
-		if(vcpu->kvm->sse_data.sse_enable ==1)
+                //catching int3
+	if(vcpu->kvm->sse_data.sse_enable ==1)
         {
 
             unsigned long esp;
@@ -4999,13 +5000,13 @@ static int handle_exception(struct kvm_vcpu *vcpu)
             inject_sys = 0;
             ret = 1;
   
-		    kvm_run->exit_reason = KVM_EXIT_EXCEPTION;
-		    kvm_run->ex.exception = ex_no;
+	    kvm_run->exit_reason = KVM_EXIT_EXCEPTION;
+	    kvm_run->ex.exception = ex_no;
 
             if(
-			    vcpu->kvm->sse_data.cr3 == vcpu->arch.cr3
-               )
-			   {
+		    vcpu->kvm->sse_data.cr3 == vcpu->arch.cr3
+              )
+	   {
 
                     if(vcpu->kvm->sse_data.running == 1)
                      {
@@ -5053,11 +5054,11 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 			int ret;
             int inject_sys, inject_fork, inject_pid;
             int brestore, bsave;
-			unsigned long rip = kvm_rip_read(vcpu);
+       	    unsigned long rip = kvm_rip_read(vcpu);
             unsigned long esp = kvm_register_read(vcpu,VCPU_REGS_RSP);
-		    kvm_run->exit_reason = KVM_EXIT_EXCEPTION;
-		    kvm_run->ex.exception = ex_no;
-		    kvm_run->ex.error_code = error_code;
+	    kvm_run->exit_reason = KVM_EXIT_EXCEPTION;
+	    kvm_run->ex.exception = ex_no;
+	    kvm_run->ex.error_code = error_code;
      
             r = is_sysenter(vcpu);
             inject_sys = 0;
