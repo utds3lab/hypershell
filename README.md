@@ -14,21 +14,21 @@ Build
 =====
 1. build the kvm-kmod
 
-    $ cd kvm-kmod
+    $ cd kvm-kmod 
     $ ./configure & make
 
 2. build qemu
    
-    $ cd sse-qemu
-    $ mkdir build
-    $ cd build
-    $ ../configure --prefix=`pwd` --target-list=i386-softmmu --disable-werror --disable-strip  --enable-kvm
-    $ make install
+    $ cd sse-qemu 
+    $ mkdir build 
+    $ cd build 
+    $ ../configure --prefix=`pwd` --target-list=i386-softmmu --disable-werror --disable-strip  --enable-kvm 
+    $ make install 
 
 3. build syscall interception module
    
-    $ cd sse
-    $ make
+    $ cd sse 
+    $ make 
  
 
 RUN
@@ -45,8 +45,8 @@ RUN
 
 3. run the introspection program
 
-   $ cd run
-   $ ./run.sh ps
+   $ cd run 
+   $ ./run.sh ps 
 
 
 
