@@ -14,8 +14,10 @@ Build
 =====
 1. build the kvm-kmod
 
+    ```
     $ cd kvm-kmod  
     $ ./configure & make  
+    ```
 
 2. build qemu
    
@@ -28,10 +30,10 @@ Build
     ```
 
 3. build syscall interception module
-   
+    ```
     $ cd sse  
     $ make  
- 
+    ```
 
 RUN
 ===
@@ -46,9 +48,10 @@ RUN
    In qemu terminal run start-sse
 
 3. run the introspection program
-
+   ```
    $ cd run  
    $ ./run.sh ps  
+   ```
 
 
 
