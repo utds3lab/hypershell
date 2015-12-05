@@ -43,7 +43,7 @@ RUN
 
 2. start the VM
 
-   ./qemu-i386-system guest.img --enable-kvm -monitor stdio
+   sudo ./qemu-i386-system guest.img --enable-kvm -monitor stdio -m 256
 
    In qemu terminal run start-sse
 

@@ -1,12 +1,5 @@
-/*
-  #
-  #  Copyright © 2015 The University of Texas System Board of Regents, All Rights Reserved.
-  #       Author:        The Systems and Software Security (S3) Laboratory.
-  #         Date:        May 28, 2015
-  #      Version:        1.0.0
-  #
-*/
 #include"sse.h"
+#include<linux/sockios.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -25,8 +18,12 @@
 #define SEMKEY3 (key_t)0xF00B02
 
 
-size_t sbuf_size = 0x100000;
+size_t sbuf_size = 0x400000;
 target_ulong user_buf;
+int p1, p2,p3;
+key_t key=1237;
+struct sc_info *shm;
+
 
 int sem_get(key_t key)
 {
@@ -44,6 +41,17 @@ int mysem_init(key_t key, int inival)
   arg.val=inival;
   semctl(semid, 0, SETVAL, arg);
   return semid;
+}
+
+inline void P1(int semid)
+{
+	while(shm->sig[semid]==0);
+	shm->sig[semid]=0;
+}
+
+inline void V1(int semid)
+{	
+	shm->sig[semid]=1;
 }
 
 void P(int semid)
@@ -71,17 +79,27 @@ void V(int semid)
 #endif
 }
 
-int p1, p2;
-key_t key=1236;
-struct sc_info *shm;
-
 extern uint8_t *get_ram_addr();
 void sig_init(void)
 {
 
     p1 = mysem_init(SEMKEY1, 0); 
     p2 = mysem_init(SEMKEY2, 0); 
+    p3 = mysem_init(SEMKEY3, 0); 
     
+	int shm_id;
+    shm_id = shmget(key, sbuf_size * sizeof(char),IPC_CREAT);
+	if(shm_id == -1)
+        printf("Create share memory error %s \n", strerror(errno));
+
+    shm = shmat(shm_id,NULL,NULL);
+   
+   	if(shm == -1)
+    {   
+        printf("Create share memory error %s \n", strerror(errno));
+    }
+    mremap(shm, 0x100000, 0x100000, 0x3, get_ram_addr());
+
 	shm = get_ram_addr();
 #ifdef DEBUG
     printf("share memory address is %p\n", shm);
@@ -91,26 +109,45 @@ void sig_init(void)
 
 
 //guest inject syscall
+void wait_start()
+{
+	P(p3);
+}
 void wait_sc(void)
 {
-    P(p1);
+ //   P1(0);
+ 	  P(p1);
 }
 
 void sig_finish(target_ulong ret)
 {
 
-#ifdef DEBUG
-    printf("syscall return %x\n", ret);
-#endif
+ //   printf("syscall return %x\n", ret);
 	
 	shm->sysret = ret;
+//	V1(1);
 	V(p2);
 }
+struct iovecs{
+			void * base;
+			unsigned len;
+ };
+struct msghdr {
+	void	*	msg_name;	/* Socket name			*/
+	int		msg_namelen;	/* Length of name		*/
+	struct iovec *	msg_iov;	/* Data blocks			*/
+	int	msg_iovlen;	/* Number of blocks		*/
+	void 	*	msg_control;	/* Per protocol magic (eg BSD file descriptor passing) */
+	int	msg_controllen;	/* Length of cmsg list */
+	unsigned	msg_flags;
+};
 
 int get_sc_info(int arg[], target_ulong * syscall)
 {
 	int i;
 	*syscall = shm->syscall;
+	if(*syscall==252)
+		printf("Exit\n");
 #ifdef DEBUG
     printf("exectue syscall %x %x\n", *syscall, sizeof(struct sc_info));
     if(*syscall == 0x5)
@@ -118,6 +155,49 @@ int get_sc_info(int arg[], target_ulong * syscall)
         printf("open file %s\n", (char *)shm + shm->arg[0].buf_addr);
     }
 #endif
+	if(*syscall ==102)  //sockatcall
+	{
+		arg[0] = shm->arg[0].value;
+		arg[1] = shm->free + user_buf;
+		unsigned long *a = (char *)shm + shm->free;
+		if(shm->arg[1].value==0x10 ||shm->arg[1].value==0x11)
+		{
+			a[0] = shm->arg[1].value;
+			a[1] = shm->arg[2].buf_addr + user_buf;
+		    a[2] = shm->arg[3].value;	
+			
+			struct msghdr *msg;
+			msg = (char *)shm + shm->arg[2].buf_addr;
+			msg->msg_name = shm->arg[4].buf_addr + user_buf;
+			msg->msg_iov  = shm->arg[5].buf_addr + user_buf;
+			if(msg->msg_controllen!=0)
+				msg->msg_control = shm->arg[7].buf_addr + user_buf;
+			struct iovecs *i =(char *)shm + shm->arg[5].buf_addr;
+			i->base = shm->arg[6].buf_addr + user_buf;
+
+		}else{
+
+		for (i=1;i<shm->arg_num;i++)
+		{
+			if(shm->arg[i].pointer)
+				a[i-1]= shm->arg[i].buf_addr + user_buf;
+			else
+				a[i-1]= shm->arg[i].value;
+		}
+
+		}
+		return 2;
+	}
+	if(*syscall == 54 && shm->arg[1].value==SIOCGIFCONF)
+	{
+		arg[0] = shm->arg[0].value;
+		arg[1] = shm->arg[1].value;
+		arg[2] = shm->arg[2].buf_addr + user_buf;
+		unsigned long *a = (char *)shm + shm->arg[2].buf_addr;
+		a[1] = shm->arg[3].buf_addr + user_buf;
+		return 3;
+	}
+
 	for(i=0; i< shm->arg_num;i++)
 	{
 		if(shm->arg[i].pointer)

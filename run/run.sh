@@ -1,1 +1,1 @@
-sudo LD_PRELOAD=./libc.so:../sse/sse.so $@   &>/dev/null
+sudo LD_PRELOAD=./libc.so:../sse/sse.so $@  

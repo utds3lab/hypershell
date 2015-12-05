@@ -1129,13 +1129,14 @@ FWCfgState *pc_memory_init(MemoryRegion *system_memory,
     ram = g_malloc(sizeof(*ram));
 
     //yang
+    extern size_t sbuf_size;
     memory_region_init_ram(ram, NULL, "pc.ram",
-                           below_4g_mem_size + above_4g_mem_size + 0x200000);
+                           below_4g_mem_size + above_4g_mem_size + sbuf_size*2);
     vmstate_register_ram_global(ram);
     *ram_memory = ram;
     ram_below_4g = g_malloc(sizeof(*ram_below_4g));
     memory_region_init_alias(ram_below_4g, NULL, "ram-below-4g", ram,
-                             0, below_4g_mem_size +0x200000);
+                             0, below_4g_mem_size + sbuf_size*2);
     memory_region_add_subregion(system_memory, 0, ram_below_4g);
     if (above_4g_mem_size > 0) {
         ram_above_4g = g_malloc(sizeof(*ram_above_4g));

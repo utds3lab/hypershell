@@ -1,11 +1,3 @@
-/*
-  #
-  #  Copyright © 2015 The University of Texas System Board of Regents, All Rights Reserved.
-  #       Author:        The Systems and Software Security (S3) Laboratory.
-  #         Date:        May 28, 2015
-  #      Version:        1.0.0
-  #
-*/
 #include "qemu-common.h"
 struct sys_para{
     int pointer;
@@ -16,11 +8,12 @@ struct sys_para{
 };
 
 struct sc_info{
-    struct sys_para arg[6];
+    struct sys_para arg[16];
     int arg_num;
     target_ulong syscall;
     target_ulong sysret;
     target_ulong free;
+	int sig[3];
 };
 union semun
 {

@@ -24,7 +24,7 @@
 #define SEMKEY3 (key_t)0xF00B02
 
 
-size_t sbuf_size = 0x100000;
+size_t sbuf_size = 0x400000;
 
 int sem_get(key_t key)
 {
@@ -45,7 +45,7 @@ int mysem_init(key_t key, int inival)
 }
 
 static int p1, p2,p3;
-static key_t key=1236;
+static key_t key=1237;
 struct sc_info *shm;
 int seminit =0;
 
