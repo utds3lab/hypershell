@@ -1,0 +1,40 @@
+.TH PTHREAD_KILL_OTHER_THREADS_NP 3 LinuxThreads
+
+.SH NAME
+pthread_kill_other_threads_np \- terminate all threads in program except calling thread
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+void pthread_kill_other_threads_np(void);
+
+.SH DESCRIPTION
+\fBpthread_kill_other_threads_np\fP is a non-portable LinuxThreads extension.
+It causes all threads in the program to terminate immediately, except
+the calling thread which proceeds normally. It is intended to be
+called just before a thread calls one of the \fBexec\fP functions,
+e.g. \fBexecve\fP(2).
+
+Termination of the other threads is not performed through
+\fBpthread_cancel\fP(3) and completely bypasses the cancellation
+mechanism. Hence, the current settings for cancellation state and
+cancellation type are ignored, and the cleanup handlers are not
+executed in the terminated threads.
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBexecve\fP(2),
+\fBpthread_setcancelstate\fP(3),
+\fBpthread_setcanceltype\fP(3),
+\fBpthread_cancel\fP(3).
+
+.SH BUGS
+
+According to POSIX 1003.1c, a successful \fBexec*\fP in one of the threads
+should terminate automatically all other threads in the program.
+This behavior is not yet implemented in LinuxThreads.
+Calling \fBpthread_kill_other_threads_np\fP before \fBexec*\fP achieves much
+of the same behavior, except that if \fBexec*\fP ultimately fails, then
+all other threads are already killed.

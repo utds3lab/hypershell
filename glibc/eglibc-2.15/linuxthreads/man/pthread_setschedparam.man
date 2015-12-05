@@ -1,0 +1,79 @@
+.TH PTHREAD_SETSCHEDPARAM 3 LinuxThreads
+
+.XREF pthread_getschedparam
+
+.SH NAME
+pthread_setschedparam, pthread_getschedparam \- control thread scheduling parameters
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+int pthread_setschedparam(pthread_t target_thread, int policy, const struct sched_param *param);
+
+int pthread_getschedparam(pthread_t target_thread, int *policy, struct sched_param *param);
+
+.SH DESCRIPTION
+
+\fBpthread_setschedparam\fP sets the scheduling parameters for the thread
+\fItarget_thread\fP as indicated by \fIpolicy\fP and \fIparam\fP. \fIpolicy\fP can be
+either \fBSCHED_OTHER\fP (regular, non-realtime scheduling), \fBSCHED_RR\fP
+(realtime, round-robin) or \fBSCHED_FIFO\fP (realtime, first-in
+first-out). \fIparam\fP specifies the scheduling priority for the two
+realtime policies.  See \fBsched_setpolicy\fP(2) for more information on
+scheduling policies.
+
+The realtime scheduling policies \fBSCHED_RR\fP and \fBSCHED_FIFO\fP are
+available only to processes with superuser privileges.
+
+\fBpthread_getschedparam\fP retrieves the scheduling policy and scheduling
+parameters for the thread \fItarget_thread\fP and store them in the
+locations pointed to by \fIpolicy\fP and \fIparam\fP, respectively.
+
+.SH "RETURN VALUE"
+\fBpthread_setschedparam\fP and \fBpthread_getschedparam\fP return 0 on
+success and a non-zero error code on error.
+
+.SH ERRORS
+On error, \fBpthread_setschedparam\fP returns the following error codes:
+.RS
+.TP
+\fBEINVAL\fP
+\fIpolicy\fP is not one of \fBSCHED_OTHER\fP, \fBSCHED_RR\fP, \fBSCHED_FIFO\fP
+
+.TP
+\fBEINVAL\fP
+the priority value specified by \fIparam\fP is not valid for the specified policy
+
+.TP
+\fBEPERM\fP
+the calling process does not have superuser permissions
+
+.TP
+\fBESRCH\fP
+the \fItarget_thread\fP is invalid or has already terminated
+
+.TP
+\fBEFAULT\fP
+\fIparam\fP points outside the process memory space
+.RE
+
+On error, \fBpthread_getschedparam\fP returns the following error codes:
+.RS
+.TP
+\fBESRCH\fP
+the \fItarget_thread\fP is invalid or has already terminated
+
+.TP
+\fBEFAULT\fP
+\fIpolicy\fP or \fIparam\fP point outside the process memory space
+.RE
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBsched_setscheduler\fP(2),
+\fBsched_getscheduler\fP(2),
+\fBsched_getparam\fP(2),
+\fBpthread_attr_setschedpolicy\fP(3),
+\fBpthread_attr_setschedparam\fP(3).

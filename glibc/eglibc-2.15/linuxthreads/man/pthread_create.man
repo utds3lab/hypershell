@@ -1,0 +1,46 @@
+.TH PTHREAD_CREATE 3 LinuxThreads
+
+.SH NAME
+pthread_create \- create a new thread
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+int pthread_create(pthread_t * thread, pthread_attr_t * attr, void * (*start_routine)(void *), void * arg);
+
+.SH DESCRIPTION
+\fBpthread_create\fP creates a new thread of control that executes
+concurrently with the calling thread. The new thread applies the
+function \fIstart_routine\fP passing it \fIarg\fP as first argument. The new
+thread terminates either explicitly, by calling \fBpthread_exit\fP(3),
+or implicitly, by returning from the \fIstart_routine\fP function. The
+latter case is equivalent to calling \fBpthread_exit\fP(3) with the result
+returned by \fIstart_routine\fP as exit code.
+
+The \fIattr\fP argument specifies thread attributes to be applied to the
+new thread. See \fBpthread_attr_init\fP(3) for a complete list of thread
+attributes. The \fIattr\fP argument can also be \fBNULL\fP, in which case
+default attributes are used: the created thread is joinable (not
+detached) and has default (non real-time) scheduling policy.
+
+.SH "RETURN VALUE"
+On success, the identifier of the newly created thread is stored in
+the location pointed by the \fIthread\fP argument, and a 0 is returned. On
+error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+\fBEAGAIN\fP
+not enough system resources to create a process for the new thread.
+.TP
+\fBEAGAIN\fP
+more than \fBPTHREAD_THREADS_MAX\fP threads are already active.
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBpthread_exit\fP(3),
+\fBpthread_join\fP(3),
+\fBpthread_detach\fP(3),
+\fBpthread_attr_init\fP(3).

@@ -1,0 +1,132 @@
+.TH SEMAPHORES 3 LinuxThreads
+
+.XREF sem_wait
+.XREF sem_trywait
+.XREF sem_post
+.XREF sem_getvalue
+.XREF sem_destroy
+
+.SH NAME
+sem_init, sem_wait, sem_trywait, sem_post, sem_getvalue, sem_destroy \- operations on semaphores
+
+.SH SYNOPSIS
+#include <semaphore.h>
+
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+
+int sem_wait(sem_t * sem);
+
+int sem_trywait(sem_t * sem);
+
+int sem_post(sem_t * sem);
+
+int sem_getvalue(sem_t * sem, int * sval);
+
+int sem_destroy(sem_t * sem);
+
+.SH DESCRIPTION
+This manual page documents POSIX 1003.1b semaphores, not to be
+confused with SystemV semaphores as described in \fBipc\fP(5), \fBsemctl\fP(2)
+and \fBsemop\fP(2).
+
+Semaphores are counters for resources shared between threads. The
+basic operations on semaphores are: increment the counter atomically,
+and wait until the counter is non-null and decrement it atomically.
+
+\fBsem_init\fP initializes the semaphore object pointed to by \fIsem\fP. The
+count associated with the semaphore is set initially to \fIvalue\fP. The
+\fIpshared\fP argument indicates whether the semaphore is local to the
+current process (\fIpshared\fP is zero) or is to be shared between several
+processes (\fIpshared\fP is not zero). LinuxThreads currently does not
+support process-shared semaphores, thus \fBsem_init\fP always returns with
+error \fBENOSYS\fP if \fIpshared\fP is not zero.
+
+\fBsem_wait\fP suspends the calling thread until the semaphore pointed to
+by \fIsem\fP has non-zero count. It then atomically decreases the
+semaphore count.
+
+\fBsem_trywait\fP is a non-blocking variant of \fBsem_wait\fP. If the
+semaphore pointed to by \fIsem\fP has non-zero count, the count is
+atomically decreased and \fBsem_trywait\fP immediately returns 0.
+If the semaphore count is zero, \fBsem_trywait\fP immediately returns with
+error \fBEAGAIN\fP.
+
+\fBsem_post\fP atomically increases the count of the semaphore pointed to
+by \fIsem\fP. This function never blocks and can safely be used in
+asynchronous signal handlers.
+
+\fBsem_getvalue\fP stores in the location pointed to by \fIsval\fP the current
+count of the semaphore \fIsem\fP.
+
+\fBsem_destroy\fP destroys a semaphore object, freeing the resources it
+might hold. No threads should be waiting on the semaphore at the time
+\fBsem_destroy\fP is called. In the LinuxThreads implementation, no
+resources are associated with semaphore objects, thus \fBsem_destroy\fP
+actually does nothing except checking that no thread is waiting on the
+semaphore.
+
+.SH CANCELLATION
+
+\fBsem_wait\fP is a cancellation point.
+
+.SH "ASYNC-SIGNAL SAFETY"
+
+On processors supporting atomic compare-and-swap (Intel 486, Pentium
+and later, Alpha, PowerPC, MIPS II, Motorola 68k), the \fBsem_post\fP
+function is async-signal safe and can therefore be
+called from signal handlers. This is the only thread synchronization
+function provided by POSIX threads that is async-signal safe.
+
+On the Intel 386 and the Sparc, the current LinuxThreads
+implementation of \fBsem_post\fP is not async-signal safe by lack of the
+required atomic operations.
+
+.SH "RETURN VALUE"
+
+The \fBsem_wait\fP and \fBsem_getvalue\fP functions always return 0.
+All other semaphore functions return 0 on success and -1 on error, in
+addition to writing an error code in \fBerrno\fP.
+
+.SH ERRORS
+
+The \fBsem_init\fP function sets \fBerrno\fP to the following codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+\fIvalue\fP exceeds the maximal counter value \fBSEM_VALUE_MAX\fP
+.TP
+\fBENOSYS\fP
+\fIpshared\fP is not zero
+.RE
+
+The \fBsem_trywait\fP function sets \fBerrno\fP to the following error code on error:
+.RS
+.TP
+\fBEAGAIN\fP
+the semaphore count is currently 0
+.RE
+
+The \fBsem_post\fP function sets \fBerrno\fP to the following error code on error:
+.RS
+.TP
+\fBERANGE\fP
+after incrementation, the semaphore value would exceed \fBSEM_VALUE_MAX\fP
+(the semaphore count is left unchanged in this case)
+.RE
+
+The \fBsem_destroy\fP function sets \fBerrno\fP to the following error code on error:
+.RS
+.TP
+\fBEBUSY\fP
+some threads are currently blocked waiting on the semaphore.
+.RE
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBpthread_mutex_init\fP(3),
+\fBpthread_cond_init\fP(3),
+\fBpthread_cancel\fP(3),
+\fBipc\fP(5).
+

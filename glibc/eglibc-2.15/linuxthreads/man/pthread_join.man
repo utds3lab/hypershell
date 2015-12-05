@@ -1,0 +1,70 @@
+.TH PTHREAD_JOIN 3 LinuxThreads
+
+.SH NAME
+pthread_join \- wait for termination of another thread
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+int pthread_join(pthread_t th, void **thread_return);
+
+.SH DESCRIPTION
+\fBpthread_join\fP suspends the execution of the calling thread until the
+thread identified by \fIth\fP terminates, either by calling \fBpthread_exit\fP(3)
+or by being cancelled.
+
+If \fIthread_return\fP is not \fBNULL\fP, the return value of \fIth\fP is stored
+in the location pointed to by \fIthread_return\fP.  The return value of
+\fIth\fP is either the argument it gave to \fBpthread_exit\fP(3), or
+\fBPTHREAD_CANCELED\fP if \fIth\fP was cancelled.
+
+The joined thread \fBth\fP must be in the joinable state: it must not have
+been detached using \fBpthread_detach\fP(3) or the
+\fBPTHREAD_CREATE_DETACHED\fP attribute to \fBpthread_create\fP(3).
+
+When a joinable thread terminates, its memory resources (thread
+descriptor and stack) are not deallocated until another thread
+performs \fBpthread_join\fP on it. Therefore, \fBpthread_join\fP must be
+called once for each joinable thread created to avoid memory leaks.
+
+At most one thread can wait for the termination of a given
+thread. Calling \fBpthread_join\fP on a thread \fIth\fP on which another
+thread is already waiting for termination returns an error.
+
+.SH CANCELLATION
+
+\fBpthread_join\fP is a cancellation point. If a thread is canceled while
+suspended in \fBpthread_join\fP, the thread execution resumes immediately
+and the cancellation is executed without waiting for the \fIth\fP thread
+to terminate. If cancellation occurs during \fBpthread_join\fP, the \fIth\fP
+thread remains not joined.
+
+.SH "RETURN VALUE"
+On success, the return value of \fIth\fP is stored in the location pointed
+to by \fIthread_return\fP, and 0 is returned. On error, a non-zero error
+code is returned.
+
+.SH ERRORS
+.TP
+\fBESRCH\fP
+No thread could be found corresponding to that specified by \fIth\fP.
+.TP
+\fBEINVAL\fP
+The \fIth\fP thread has been detached.
+.TP
+\fBEINVAL\fP
+Another thread is already waiting on termination of \fIth\fP.
+.TP
+\fBEDEADLK\fP
+The \fIth\fP argument refers to the calling thread.
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBpthread_exit\fP(3),
+\fBpthread_detach\fP(3),
+\fBpthread_create\fP(3),
+\fBpthread_attr_setdetachstate\fP(3),
+\fBpthread_cleanup_push\fP(3),
+\fBpthread_key_create\fP(3).

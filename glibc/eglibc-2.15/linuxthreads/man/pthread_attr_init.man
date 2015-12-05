@@ -1,0 +1,221 @@
+.TH PTHREAD_ATTR_INIT 3 LinuxThreads
+
+.XREF pthread_attr_destroy
+.XREF pthread_attr_setdetachstate
+.XREF pthread_attr_getdetachstate
+.XREF pthread_attr_setschedparam
+.XREF pthread_attr_getschedparam
+.XREF pthread_attr_setschedpolicy
+.XREF pthread_attr_getschedpolicy
+.XREF pthread_attr_setinheritsched
+.XREF pthread_attr_getinheritsched
+.XREF pthread_attr_setscope
+.XREF pthread_attr_getscope
+
+.SH NAME
+pthread_attr_init, pthread_attr_destroy, pthread_attr_setdetachstate, pthread_attr_getdetachstate, pthread_attr_setschedparam, pthread_attr_getschedparam, pthread_attr_setschedpolicy, pthread_attr_getschedpolicy, pthread_attr_setinheritsched, pthread_attr_getinheritsched, pthread_attr_setscope, pthread_attr_getscope \- thread creation attributes
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+int pthread_attr_init(pthread_attr_t *attr);
+
+int pthread_attr_destroy(pthread_attr_t *attr);
+
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
+
+int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy);
+
+int pthread_attr_getschedpolicy(const pthread_attr_t *attr, int *policy);
+
+int pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *param);
+
+int pthread_attr_getschedparam(const pthread_attr_t *attr, struct sched_param *param);
+
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inherit);
+
+int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inherit);
+
+int pthread_attr_setscope(pthread_attr_t *attr, int scope);
+
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope);
+
+.SH DESCRIPTION
+
+Setting attributes for threads is achieved by filling a
+thread attribute object \fIattr\fP of type \fBpthread_attr_t\fP, then passing it as
+second argument to \fBpthread_create\fP(3). Passing \fBNULL\fP is equivalent to
+passing a thread attribute object with all attributes set to their
+default values.
+
+\fBpthread_attr_init\fP initializes the thread attribute object \fIattr\fP and
+fills it with default values for the attributes. (The default values
+are listed below for each attribute.)
+
+Each attribute \fIattrname\fP (see below for a list of all attributes) can
+be individually set using the function \fBpthread_attr_set\fP\fIattrname\fP
+and retrieved using the function \fBpthread_attr_get\fP\fIattrname\fP.
+
+\fBpthread_attr_destroy\fP destroys a thread attribute object, which
+must not be reused until it is reinitialized. \fBpthread_attr_destroy\fP
+does nothing in the LinuxThreads implementation. 
+
+Attribute objects are consulted only when creating a new thread. The
+same attribute object can be used for creating several
+threads. Modifying an attribute object after a call to
+\fBpthread_create\fP does not change the attributes of the thread
+previously created.
+
+The following thread attributes are supported:
+
+.SS detachstate
+
+Control whether the thread is created in the joinable state (value
+\fBPTHREAD_CREATE_JOINABLE\fP) or in the detached state
+(\fBPTHREAD_CREATE_DETACHED\fP). 
+
+Default value: \fBPTHREAD_CREATE_JOINABLE\fP.
+
+In the joinable state, another thread can synchronize on the thread
+termination and recover its termination code using \fBpthread_join\fP(3),
+but some of the thread resources are kept allocated after the thread
+terminates, and reclaimed only when another thread performs
+\fBpthread_join\fP(3) on that thread.
+
+In the detached state, the thread resources are immediately freed when
+it terminates, but \fBpthread_join\fP(3) cannot be used to synchronize on
+the thread termination.
+
+A thread created in the joinable state can later be put in the
+detached state using \fBpthread_detach\fP(3).
+
+.SS schedpolicy
+
+Select the scheduling policy for the thread: one of
+\fBSCHED_OTHER\fP (regular, non-realtime scheduling),
+\fBSCHED_RR\fP (realtime, round-robin) or
+\fBSCHED_FIFO\fP (realtime, first-in first-out). See
+\fBsched_setpolicy\fP(2) for more information on scheduling policies.
+
+Default value: \fBSCHED_OTHER\fP.
+
+The realtime scheduling policies \fBSCHED_RR\fP and \fBSCHED_FIFO\fP are
+available only to processes with superuser privileges.
+
+The scheduling policy of a thread can be changed after creation with
+\fBpthread_setschedparam\fP(3).
+
+.SS schedparam
+
+Contain the scheduling parameters (essentially, the scheduling
+priority) for the thread. See \fBsched_setparam\fP(2) for more information
+on scheduling parameters. 
+
+Default value: priority is 0.
+
+This attribute is not significant if the scheduling policy is \fBSCHED_OTHER\fP;
+it only matters for the realtime policies \fBSCHED_RR\fP and \fBSCHED_FIFO\fP.
+
+The scheduling priority of a thread can be changed after creation with
+\fBpthread_setschedparam\fP(3).
+
+.SS inheritsched
+
+Indicate whether the scheduling policy and scheduling parameters for
+the newly created thread are determined by the values of the
+\fIschedpolicy\fP and \fIschedparam\fP attributes (value
+\fBPTHREAD_EXPLICIT_SCHED\fP) or are inherited from the parent thread
+(value \fBPTHREAD_INHERIT_SCHED\fP).
+
+Default value: \fBPTHREAD_EXPLICIT_SCHED\fP.
+
+.SS scope
+
+Define the scheduling contention scope for the created thread.  The
+only value supported in the LinuxThreads implementation is
+\fBPTHREAD_SCOPE_SYSTEM\fP, meaning that the threads contend for CPU time
+with all processes running on the machine. In particular, thread
+priorities are interpreted relative to the priorities of all other
+processes on the machine. The other value specified by the standard,
+\fBPTHREAD_SCOPE_PROCESS\fP, means that scheduling contention occurs only
+between the threads of the running process: thread priorities are
+interpreted relative to the priorities of the other threads of the
+process, regardless of the priorities of other processes.
+\fBPTHREAD_SCOPE_PROCESS\fP is not supported in LinuxThreads.
+
+Default value: \fBPTHREAD_SCOPE_SYSTEM\fP.
+
+.SH "RETURN VALUE"
+
+All functions return 0 on success and a non-zero error code on error.
+On success, the \fBpthread_attr_get\fP\fIattrname\fP functions also store the
+current value of the attribute \fIattrname\fP in the location pointed to
+by their second argument.
+
+.SH ERRORS
+
+The \fBpthread_attr_setdetachstate\fP function returns the following error
+codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+the specified \fIdetachstate\fP is not one of \fBPTHREAD_CREATE_JOINABLE\fP or
+\fBPTHREAD_CREATE_DETACHED\fP.
+.RE
+
+The \fBpthread_attr_setschedparam\fP function returns the following error
+codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+the priority specified in \fIparam\fP is outside the range of allowed
+priorities for the scheduling policy currently in \fIattr\fP
+(1 to 99 for \fBSCHED_FIFO\fP and \fBSCHED_RR\fP; 0 for \fBSCHED_OTHER\fP).
+.RE
+
+The \fBpthread_attr_setschedpolicy\fP function returns the following error
+codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+the specified \fIpolicy\fP is not one of \fBSCHED_OTHER\fP, \fBSCHED_FIFO\fP, or
+\fBSCHED_RR\fP.
+
+.TP
+\fBENOTSUP\fP
+\fIpolicy\fP is \fBSCHED_FIFO\fP or \fBSCHED_RR\fP, and the effective user of the
+calling process is not super-user.
+.RE
+
+The \fBpthread_attr_setinheritsched\fP function returns the following error
+codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+the specified \fIinherit\fP is not one of \fBPTHREAD_INHERIT_SCHED\fP or
+\fBPTHREAD_EXPLICIT_SCHED\fP.
+.RE
+
+The \fBpthread_attr_setscope\fP function returns the following error
+codes on error:
+.RS
+.TP
+\fBEINVAL\fP
+the specified \fIscope\fP is not one of \fBPTHREAD_SCOPE_SYSTEM\fP or
+\fBPTHREAD_SCOPE_PROCESS\fP.
+
+.TP
+\fBENOTSUP\fP
+the specified \fIscope\fP is \fBPTHREAD_SCOPE_PROCESS\fP (not supported).
+.RE
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBpthread_create\fP(3),
+\fBpthread_join\fP(3),
+\fBpthread_detach\fP(3),
+\fBpthread_setschedparam\fP(3).

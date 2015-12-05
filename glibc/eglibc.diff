@@ -1,0 +1,274 @@
+diff -Naur ./eglibc-2.15/csu/libc-start.c /home/young/source/eglibc-2.15/csu/libc-start.c
+--- ./eglibc-2.15/csu/libc-start.c	2010-02-04 15:06:08.000000000 -0600
++++ /home/young/source/eglibc-2.15/csu/libc-start.c	2015-12-04 00:20:14.243624176 -0600
+@@ -190,6 +190,8 @@
+     {
+       struct audit_ifaces *afct = GLRO(dl_audit);
+       struct link_map *head = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
++      //young
++      if(afct != NULL) {
+       for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
+ 	{
+ 	  if (afct->preinit != NULL)
+@@ -197,6 +199,7 @@
+ 
+ 	  afct = afct->next;
+ 	}
++      }
+     }
+ #endif
+ 
+diff -Naur ./eglibc-2.15/elf/Makefile /home/young/source/eglibc-2.15/elf/Makefile
+--- ./eglibc-2.15/elf/Makefile	2015-03-26 14:06:00.000000000 -0500
++++ /home/young/source/eglibc-2.15/elf/Makefile	2015-12-03 21:38:21.055970229 -0600
+@@ -424,12 +424,12 @@
+ 
+ $(objpfx)ld.so: $(objpfx)librtld.os $(ld-map)
+ 	$(LINK.o) -nostdlib -nostartfiles -shared -o $@			\
+-		  $(LDFLAGS-rtld) -Wl,-z,defs $(z-now-$(bind-now))	\
+-		  $(filter-out $(map-file),$^) $(load-map-file)		\
++        		  $(LDFLAGS-rtld) $(z-now-$(bind-now))	\
++        		  $(filter-out $(map-file),$^) $(load-map-file)		\
+ 		  -Wl,-soname=$(rtld-installed-name)			\
+ 		  -Wl,-defsym=_begin=0
+-	readelf -s $@ \
+-	  | $(AWK) '($$7 ~ /^UND(|EF)$$/ && $$1 != "0:" && $$4 != "REGISTER") { print; p=1 } END { exit p != 0 }'
++	#readelf -s $@ \
++	 # | $(AWK) '($$7 ~ /^UND(|EF)$$/ && $$1 != "0:" && $$4 != "REGISTER") { print; p=1 } END { exit p != 0 }'
+ 
+ # interp.c exists just to get this string into the libraries.
+ CFLAGS-interp.c = -D'RUNTIME_LINKER="$(rtlddir)/$(rtld-installed-name)"' \
+diff -Naur ./eglibc-2.15/Makerules /home/young/source/eglibc-2.15/Makerules
+--- ./eglibc-2.15/Makerules	2011-10-24 19:37:10.000000000 -0500
++++ /home/young/source/eglibc-2.15/Makerules	2015-12-03 17:54:05.388449549 -0600
+@@ -481,7 +481,7 @@
+ ifeq ($(elf),yes)
+ define build-shlib-helper
+ $(LINK.o) -shared $(static-libgcc) -Wl,-O1 $(sysdep-LDFLAGS) \
+-	  $(if $($(@F)-no-z-defs)$(no-z-defs),,-Wl,-z,defs) $(config-LDFLAGS) \
++	  $(config-LDFLAGS) \
+ 	  $(extra-B-$(@F:lib%.so=%).so) -B$(csu-objpfx) \
+ 	  $(extra-B-$(@F:lib%.so=%).so) $(load-map-file) \
+ 	  -Wl,-soname=lib$(libprefix)$(@F:lib%.so=%).so$($(@F)-version) \
+diff -Naur ./eglibc-2.15/misc/Makefile /home/young/source/eglibc-2.15/misc/Makefile
+--- ./eglibc-2.15/misc/Makefile	2011-10-24 19:37:10.000000000 -0500
++++ /home/young/source/eglibc-2.15/misc/Makefile	2015-12-03 16:02:09.848688752 -0600
+@@ -67,7 +67,7 @@
+ 	    getloadavg getclktck \
+ 	    fgetxattr flistxattr fremovexattr fsetxattr getxattr \
+ 	    listxattr lgetxattr llistxattr lremovexattr lsetxattr \
+-	    removexattr setxattr
++	    removexattr setxattr syscallori pemu
+ 
+ routines-$(OPTION_POSIX_REGEXP) += regexp
+ routines-$(OPTION_EGLIBC_FSTAB) += fstab
+diff -Naur ./eglibc-2.15/misc/Versions /home/young/source/eglibc-2.15/misc/Versions
+--- ./eglibc-2.15/misc/Versions	2011-04-01 14:43:08.000000000 -0500
++++ /home/young/source/eglibc-2.15/misc/Versions	2015-12-03 18:18:51.848396602 -0600
+@@ -71,7 +71,7 @@
+     # s*
+     sbrk; select; setdomainname; setfsent; sethostent; sethostid; sethostname;
+     setlogmask; setmntent; setregid; setreuid; setttyent; setusershell; sstk;
+-    stty; sync; syscall; syslog;
++    stty; sync; syscall; syslog; syscallori;
+ 
+     # t*
+     tdelete; tfind; truncate; tsearch; ttyslot; twalk;
+diff -Naur ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/pemu.c /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/pemu.c
+--- ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/pemu.c	1969-12-31 18:00:00.000000000 -0600
++++ /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/pemu.c	2015-12-04 00:22:52.251618298 -0600
+@@ -0,0 +1,4 @@
++int pemusysenter(int sysnum, int arg1, int arg2, int arg3,int arg4, int arg5, int arg6)
++{
++		return introspect_enter_PEMU(sysnum, arg1, arg2,arg3,arg4,arg5,arg6);
++}
+diff -Naur ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/syscallori.S /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/syscallori.S
+--- ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/syscallori.S	1969-12-31 18:00:00.000000000 -0600
++++ /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/syscallori.S	2015-12-03 16:00:22.444692577 -0600
+@@ -0,0 +1,37 @@
++/* Copyright (C) 1995, 1996, 1998, 2002, 2004 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++#include <sysdep.h>
++
++/* Please consult the file sysdeps/unix/sysv/linux/i386/sysdep.h for
++   more information about the value -4095 used below.*/
++
++	.text
++ENTRY (syscallori)
++
++	PUSHARGS_6		/* Save register contents.  */
++	_DOARGS_6(44)		/* Load arguments.  */
++	movl 20(%esp), %eax	/* Load syscall number into %eax.  */
++	call *%gs:0x10		/* Do the system call.  */
++	POPARGS_6		/* Restore register contents.  */
++	cmpl $-4095, %eax	/* Check %eax for error.  */
++	jae SYSCALL_ERROR_LABEL	/* Jump to error handler if error.  */
++L(pseudo_end):
++	ret			/* Return to caller.  */
++
++PSEUDO_END (syscallori)
+diff -Naur ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/sysdep.h /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/sysdep.h
+--- ./eglibc-2.15/sysdeps/unix/sysv/linux/i386/sysdep.h	2015-12-04 21:24:32.594112779 -0600
++++ /home/young/source/eglibc-2.15/sysdeps/unix/sysv/linux/i386/sysdep.h	2015-12-04 21:28:54.614102889 -0600
+@@ -1,5 +1,5 @@
+-/* Copyright (C) 1995,1993,1995-2000,2002-2006,2007,2011
+-	Free Software Foundation, Inc.
++/* Copyright (C) 1992,1993,1995-2000,2002-2006,2007,2011
++   	Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+    Contributed by Ulrich Drepper, <drepper@gnu.org>, August 1995.
+ 
+@@ -166,12 +166,43 @@
+    to use int $0x80.  */
+ #ifdef I386_USE_SYSENTER
+ # ifdef SHARED
+-#  define ENTER_KERNEL call *%gs:SYSINFO_OFFSET
++//#  define ENTER_KERNEL call *%gs:SYSINFO_OFFSET
++#  define ENTER_KERNEL pushl %ebp;\
++		               pushl %edi;\
++		               pushl %esi;\
++		               pushl %edx;\
++		               pushl %ecx;\
++		               pushl %ebx;\
++		               pushl %eax;\
++	                   call pemusysenter; \
++	                   addl   $0x4, %esp;\
++	  				   popl %ebx;\
++	  				   popl %ecx;\
++	  				   popl %edx;\
++	  				   popl %esi;\
++	  				   popl %edi;\
++	  				   popl %ebp;
++	                   
+ # else
+ #  define ENTER_KERNEL call *_dl_sysinfo
+ # endif
+ #else
+-# define ENTER_KERNEL int $0x80
++//# define ENTER_KERNEL int $0x80
++#  define ENTER_KERNEL pushl %ebp;\
++		               pushl %edi;\
++		               pushl %esi;\
++		               pushl %edx;\
++		               pushl %ecx;\
++		               pushl %ebx;\
++		               pushl %eax;\
++	                   call pemusysenter; \
++	                   addl   $0x4, %esp;\
++	  				   popl %ebx;\
++	  				   popl %ecx;\
++	  				   popl %edx;\
++	  				   popl %esi;\
++	  				   popl %edi;\
++	  				   popl %ebp;
+ #endif
+ 
+ /* Linux takes system call arguments in registers:
+@@ -346,7 +377,21 @@
+     asm volatile (							      \
+     LOADARGS_##nr							      \
+     "movl %1, %%eax\n\t"						      \
+-    "call *%%gs:%P2\n\t"						      \
++	"pushl %%ebp\n\t"           \
++	"pushl %%edi\n\t"           \
++	"pushl %%esi\n\t"           \
++	"pushl %%edx\n\t"           \
++	"pushl %%ecx\n\t"           \
++	"pushl %%ebx\n\t"           \
++	"pushl %%eax\n\t"           \
++    "call pemusysenter\n\t"                         \
++	"addl $0x4, %%esp\n\t"          \
++	"popl %%ebx\n\t"\
++	"popl %%ecx\n\t"\
++	"popl %%edx\n\t"\
++	"popl %%esi\n\t"\
++	"popl %%edi\n\t"\
++	"popl %%ebp\n\t"\
+     RESTOREARGS_##nr							      \
+     : "=a" (resultvar)							      \
+     : "i" (__NR_##name), "i" (offsetof (tcbhead_t, sysinfo))		      \
+@@ -358,7 +403,21 @@
+     EXTRAVAR_##nr							      \
+     asm volatile (							      \
+     LOADARGS_##nr							      \
+-    "call *%%gs:%P2\n\t"						      \
++	"pushl %%ebp\n\t"           \
++	"pushl %%edi\n\t"           \
++	"pushl %%esi\n\t"           \
++	"pushl %%edx\n\t"           \
++	"pushl %%ecx\n\t"           \
++	"pushl %%ebx\n\t"           \
++	"pushl %%eax\n\t"           \
++    "call pemusysenter\n\t"                         \
++	"addl $0x4, %%esp\n\t"          \
++	"popl %%ebx\n\t"\
++	"popl %%ecx\n\t"\
++	"popl %%edx\n\t"\
++	"popl %%esi\n\t"\
++	"popl %%edi\n\t"\
++	"popl %%ebp\n\t"\
+     RESTOREARGS_##nr							      \
+     : "=a" (resultvar)							      \
+     : "0" (name), "i" (offsetof (tcbhead_t, sysinfo))			      \
+@@ -397,7 +456,21 @@
+     asm volatile (							      \
+     LOADARGS_##nr							      \
+     "movl %1, %%eax\n\t"						      \
+-    "int $0x80\n\t"							      \
++	"pushl %%ebp\n\t"           \
++	"pushl %%edi\n\t"           \
++	"pushl %%esi\n\t"           \
++	"pushl %%edx\n\t"           \
++	"pushl %%ecx\n\t"           \
++	"pushl %%ebx\n\t"           \
++	"pushl %%eax\n\t"           \
++    "call pemusysenter\n\t"                         \
++	"addl $0x4, %%esp\n\t"          \
++	"popl %%ebx\n\t"\
++	"popl %%ecx\n\t"\
++	"popl %%edx\n\t"\
++	"popl %%esi\n\t"\
++	"popl %%edi\n\t"\
++	"popl %%ebp\n\t"\
+     RESTOREARGS_##nr							      \
+     : "=a" (resultvar)							      \
+     : "i" (__NR_##name) ASMFMT_##nr(args) : "memory", "cc");		      \
+@@ -408,7 +481,21 @@
+     EXTRAVAR_##nr							      \
+     asm volatile (							      \
+     LOADARGS_##nr							      \
+-    "int $0x80\n\t"							      \
++	"pushl %%ebp\n\t"           \
++	"pushl %%edi\n\t"           \
++	"pushl %%esi\n\t"           \
++	"pushl %%edx\n\t"           \
++	"pushl %%ecx\n\t"           \
++	"pushl %%ebx\n\t"           \
++	"pushl %%eax\n\t"           \
++    "call pemusysenter\n\t"                         \
++	"addl $0x4, %%esp\n\t"          \
++	"popl %%ebx\n\t"\
++	"popl %%ecx\n\t"\
++	"popl %%edx\n\t"\
++	"popl %%esi\n\t"\
++	"popl %%edi\n\t"\
++	"popl %%ebp\n\t"\
+     RESTOREARGS_##nr							      \
+     : "=a" (resultvar)							      \
+     : "0" (name) ASMFMT_##nr(args) : "memory", "cc");			      \

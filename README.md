@@ -5,7 +5,7 @@ Hypershell is a practical hypervisor layer guest OS shell that has all of the fu
 
 Enviroment
 ==========
-1.Host: Ubuntu 12.04
+1.Host: Ubuntu 12.04 (linux kernel version small than 3.10)
 
 2.Guest: Debian 6 
 
@@ -34,6 +34,15 @@ Build
     $ cd sse  
     $ make  
     ```
+
+4. Recomplie the glibc (not needed)
+   ```
+   $ cd glibc
+   $ mkdir build
+   $ cd build
+   $ ../eglibc-2.15/configure --prefix=`pwd`
+   $ make CFLAGS="-O2 -U_FORTIFY_SOURCE -fno-stack-protector" 
+   ```
 
 RUN
 ===

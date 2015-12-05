@@ -1,0 +1,32 @@
+.TH PTHREAD_EXIT 3 LinuxThreads
+
+.SH NAME
+pthread_exit \- terminate the calling thread
+
+.SH SYNOPSIS
+#include <pthread.h>
+
+void pthread_exit(void *retval);
+
+.SH DESCRIPTION
+\fBpthread_exit\fP terminates the execution of the calling thread.
+All cleanup handlers that have been set for the calling thread with
+\fBpthread_cleanup_push\fP(3) are executed in reverse order (the most
+recently pushed handler is executed first). Finalization functions for
+thread-specific data are then called for all keys that have non-\fBNULL\fP
+values associated with them in the calling thread (see
+\fBpthread_key_create\fP(3)). Finally, execution of the calling thread is
+stopped.
+
+The \fIretval\fP argument is the return value of the thread. It can be
+consulted from another thread using \fBpthread_join\fP(3).
+
+.SH "RETURN VALUE"
+The \fBpthread_exit\fP function never returns.
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+\fBpthread_create\fP(3),
+\fBpthread_join\fP(3).
